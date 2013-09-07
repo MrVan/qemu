@@ -417,6 +417,7 @@ int cpu_exec(CPUState *env)
 #elif defined(TARGET_UNICORE32)
                     if (interrupt_request & CPU_INTERRUPT_HARD
                         && !(env->uncached_asr & ASR_I)) {
+                        env->exception_index = UC32_EXCP_EINTR;
                         do_interrupt(env);
                         next_tb = 0;
                     }

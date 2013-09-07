@@ -7,6 +7,8 @@
  */
 #include "def-helper.h"
 
+DEF_HELPER_0(trace_insn, void)
+
 DEF_HELPER_1(clz, i32, i32)
 DEF_HELPER_1(clo, i32, i32)
 

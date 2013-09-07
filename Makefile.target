@@ -369,6 +369,9 @@ obj-arm-y += strongarm.o
 obj-arm-y += collie.o
 obj-arm-y += pl041.o lm4549.o
 
+obj-unicore32-y = sep6200.o sep6200_pic.o uc32_pic.o sep6200_sysctl.o sep6200_timer.o sep6200_clk.o
+obj-unicore32-y += sep6200_pm.o
+
 obj-sh4-y = shix.o r2d.o sh7750.o sh7750_regnames.o tc58128.o
 obj-sh4-y += sh_timer.o sh_serial.o sh_intc.o sh_pci.o sm501.o
 obj-sh4-y += ide/mmio.o

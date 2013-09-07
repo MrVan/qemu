@@ -14,6 +14,61 @@
 #define SIGNBIT (uint32_t)0x80000000
 #define SIGNBIT64 ((uint64_t)1 << 63)
 
+#if !defined(CONFIG_USER_ONLY)
+static void raise_exception(int tt)
+{
+	env->exception_index = tt;
+	cpu_loop_exit(env);
+}
+#endif
+
+
+#if !defined(CONFIG_USER_ONLY)
+
+#include "softmmu_exec.h"
+
+#define MMUSUFFIX _mmu
+
+#define SHIFT 0
+#include "softmmu_template.h"
+
+#define SHIFT 1
+#include "softmmu_template.h"
+
+#define SHIFT 2
+#include "softmmu_template.h"
+
+#define SHIFT 3
+#include "softmmu_template.h"
+
+void tlb_fill(CPUState *env1, target_ulong addr, int is_write, int mmu_idx,
+              void *retaddr)
+{
+    TranslationBlock *tb;
+    CPUState *saved_env;
+    unsigned long pc;
+    int ret;
+
+    saved_env = env;
+    env = env1;
+    ret = uc32_cpu_handle_mmu_fault(env, addr, is_write, mmu_idx);
+    if (unlikely(ret)) {
+        if (retaddr) {
+            /* now we have a real cpu fault */
+            pc = (unsigned long)retaddr;
+            tb = tb_find_pc(pc);
+            if (tb) {
+                /* the PC is inside the translated code. It means that we have
+                   a virtual CPU fault */
+                cpu_restore_state(tb, env, pc);
+            }
+        }
+        raise_exception(env->exception_index);
+    }
+    env = saved_env;
+}
+#endif
+
 void HELPER(exception)(uint32_t excp)
 {
     env->exception_index = excp;
@@ -246,4 +301,12 @@ uint32_t HELPER(ror_cc)(uint32_t x, uint32_t i)
         env->CF = (x >> (shift - 1)) & 1;
         return ((uint32_t)x >> shift) | (x << (32 - shift));
     }
+}
+
+void HELPER(trace_insn)(void)
+{
+  //cpu_dump_state(env, stderr, fprintf, 0);
+	fprintf(stderr, "pc = 0x%x sp = 0x%x\n", env->regs[31], env->regs[29]);
+  //log_cpu_state(env, 0);
+  //qemu_log_flush();
 }

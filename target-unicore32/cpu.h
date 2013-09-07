@@ -11,8 +11,15 @@
 #define __CPU_UC32_H__
 
 #define TARGET_LONG_BITS                32
-#define TARGET_PAGE_BITS                12
 
+#if defined(CONFIG_USER_ONLY)
+#define TARGET_PAGE_BITS 12
+#else
+/* The ARM MMU allows 1k pages.  */
+/* ??? Linux doesn't actually use these, and they're deprecated in recent
+   architecture revisions.  Maybe a configure option to disable them.  */
+#define TARGET_PAGE_BITS 10 //fanpeng??
+#endif
 #define TARGET_PHYS_ADDR_SPACE_BITS     32
 #define TARGET_VIRT_ADDR_SPACE_BITS     32
 
@@ -73,11 +80,13 @@ typedef struct CPUState_UniCore32 {
 
 #define ASR_M                   (0x1f)
 #define ASR_MODE_USER           (0x10)
+#define ASR_MODE_REAL           (0x11)
 #define ASR_MODE_INTR           (0x12)
 #define ASR_MODE_PRIV           (0x13)
 #define ASR_MODE_TRAP           (0x17)
 #define ASR_MODE_EXTN           (0x1b)
 #define ASR_MODE_SUSR           (0x1f)
+#define ASR_R                   (1 << 6)
 #define ASR_I                   (1 << 7)
 #define ASR_V                   (1 << 28)
 #define ASR_C                   (1 << 29)
@@ -86,8 +95,13 @@ typedef struct CPUState_UniCore32 {
 #define ASR_NZCV                (ASR_N | ASR_Z | ASR_C | ASR_V)
 #define ASR_RESERVED            (~(ASR_M | ASR_I | ASR_NZCV))
 
-#define UC32_EXCP_PRIV          (ASR_MODE_PRIV)
-#define UC32_EXCP_TRAP          (ASR_MODE_TRAP)
+#define UC32_EXCP_RESET 0
+#define UC32_EXCP_EEXTN 1
+#define UC32_EXCP_EPRIV 2
+#define UC32_EXCP_ITRAP 3
+#define UC32_EXCP_DTRAP 4
+#define UC32_EXCP_EINTR 5
+#define UC32_EXCP_EREAL 6
 
 /* Return the current ASR value.  */
 target_ulong cpu_asr_read(CPUState *env1);
@@ -118,8 +132,10 @@ void cpu_asr_write(CPUState *env1, target_ulong val, target_ulong mask);
 #define UC32_HWCAP_UCF64                8 /* 1 << 3 */
 
 #define UC32_CPUID(env)                 (env->cp0.c0_cpuid)
-#define UC32_CPUID_UCV2                 0x40010863
+//#define UC32_CPUID_UCV2                 0x40010863
 #define UC32_CPUID_ANY                  0xffffffff
+
+#define UC32_CPUID_UCV2                 0x4d000863
 
 #define cpu_init                        uc32_cpu_init
 #define cpu_exec                        uc32_cpu_exec

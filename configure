@@ -880,6 +880,7 @@ i386-softmmu \
 x86_64-softmmu \
 alpha-softmmu \
 arm-softmmu \
+unicore32-softmmu \
 cris-softmmu \
 lm32-softmmu \
 m68k-softmmu \
@@ -3623,6 +3624,10 @@ for i in $ARCH $TARGET_BASE_ARCH ; do
   arm)
     echo "CONFIG_ARM_DIS=y"  >> $config_target_mak
     echo "CONFIG_ARM_DIS=y"  >> $libdis_config_mak
+  ;;
+  unicore32)
+    echo "CONFIG_UNICORE32_DIS=y"  >> $config_target_mak
+    echo "CONFIG_UNICORE32_DIS=y"  >> $libdis_config_mak
   ;;
   cris)
     echo "CONFIG_CRIS_DIS=y"  >> $config_target_mak

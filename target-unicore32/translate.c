@@ -32,9 +32,16 @@ typedef struct DisasContext {
     int condlabel;
     struct TranslationBlock *tb;
     int singlestep_enabled;
+#if !defined(CONFIG_USER_ONLY)
+    int user;
+#endif
 } DisasContext;
 
+#if defined(CONFIG_USER_ONLY)
 #define IS_USER(s) 1
+#else
+#define IS_USER(s) (s->user)
+#endif
 
 /* These instructions trap after executing, so defer them until after the
    conditional executions state has been updated.  */
@@ -1123,9 +1130,40 @@ static void gen_exception_return(DisasContext *s, TCGv pc)
     s->is_jmp = DISAS_UPDATE;
 }
 
+#define UC32_CP_RW_BIT (1 << 24)
+
+static void disas_ucp0_insn(CPUState *env, DisasContext *s, uint32_t insn)
+{
+    uint32_t rd;
+    uint32_t nn;
+    TCGv tmp, tmp2;
+
+    nn = (insn >> 19) & 0x1f; //pp.nn
+    rd = (insn >> 14) & 0x1f; // read write/ mannul is wrong
+
+    tmp2 = tcg_const_i32(insn);
+    if (insn & UC32_CP_RW_BIT) {
+      tmp = new_tmp();
+      gen_helper_get_cp0(tmp, cpu_env, tmp2);
+      if (rd != 31) 
+        store_reg(s, rd, tmp);
+      else
+        tcg_temp_free_i32(tmp);
+    } else {
+      tmp = load_reg(s, rd); 
+      gen_helper_set_cp0(cpu_env, tmp2, tmp);
+      dead_tmp(tmp);
+      // do future gen_lookup_tb(s);
+    }
+    tcg_temp_free_i32(tmp2);
+}
+
 static void disas_coproc_insn(CPUState *env, DisasContext *s, uint32_t insn)
 {
     switch (UCOP_CPNUM) {
+    case 0:
+      disas_ucp0_insn(env, s, insn);
+      break;
     case 2:
         disas_ucf64_insn(env, s, insn);
         break;
@@ -1875,6 +1913,9 @@ static inline void gen_intermediate_code_internal(CPUState *env,
     dc->pc = pc_start;
     dc->singlestep_enabled = env->singlestep_enabled;
     dc->condjmp = 0;
+#if !defined(CONFIG_USER_ONLY)
+    dc->user = (((tb->flags >> 6) & 0x1) == 0);
+#endif
     cpu_F0s = tcg_temp_new_i32();
     cpu_F1s = tcg_temp_new_i32();
     cpu_F0d = tcg_temp_new_i64();
@@ -1958,7 +1999,7 @@ static inline void gen_intermediate_code_internal(CPUState *env,
         /* Make sure the pc is updated, and raise a debug exception.  */
         if (dc->condjmp) {
             if (dc->is_jmp == DISAS_SYSCALL) {
-                gen_exception(UC32_EXCP_PRIV);
+                gen_exception(UC32_EXCP_EPRIV);
             } else {
                 gen_exception(EXCP_DEBUG);
             }
@@ -1969,7 +2010,7 @@ static inline void gen_intermediate_code_internal(CPUState *env,
             dc->condjmp = 0;
         }
         if (dc->is_jmp == DISAS_SYSCALL && !dc->condjmp) {
-            gen_exception(UC32_EXCP_PRIV);
+            gen_exception(UC32_EXCP_EPRIV);
         } else {
             gen_exception(EXCP_DEBUG);
         }
@@ -1996,7 +2037,7 @@ static inline void gen_intermediate_code_internal(CPUState *env,
             /* nothing more to generate */
             break;
         case DISAS_SYSCALL:
-            gen_exception(UC32_EXCP_PRIV);
+            gen_exception(UC32_EXCP_EPRIV);
             break;
         }
         if (dc->condjmp) {
