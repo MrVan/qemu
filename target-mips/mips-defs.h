@@ -45,6 +45,8 @@
 #define		INSN_LOONGSON2F  0x40000000
 #define		INSN_VR54XX	0x80000000
 
+#define		CPU_LOONGSON3A_SEU (CPU_MIPS3 | ISA_MIPS32R2 | ISA_MIPS32 | INSN_LOONGSON2F) //fanpeng freenix  I do not sure whether right or wrong?
+
 /* MIPS CPU defines. */
 #define		CPU_MIPS1	(ISA_MIPS1)
 #define		CPU_MIPS2	(CPU_MIPS1 | ISA_MIPS2)

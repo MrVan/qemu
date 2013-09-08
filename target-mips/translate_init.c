@@ -311,6 +311,23 @@ static const mips_def_t mips_defs[] =
         .insn_flags = CPU_MIPS32R2 | ASE_MIPS16 | ASE_DSP | ASE_MT,
         .mmu_type = MMU_TYPE_R4000,
     },
+    {
+        .name = "Loongson-3A-seu",
+        .CP0_PRid = 0x6305,
+        /*64KB I-cache and d-cache. 4 way with 32 bit cache line size*/
+        .CP0_Config0 = (0x1<<17) | (0x1<<16) | (0x1<<11) | (0x1<<8) | (0x1<<5) |
+                       (0x1<<4) | (0x1<<1),
+        /* Note: Config1 is only used internally, Loongson-2E has only Config0. */
+        .CP0_Config1 = (1 << CP0C1_FP) | (47 << CP0C1_MMU),
+        .SYNCI_Step = 16,
+        .CCRes = 2,
+        .CP0_Status_rw_bitmask = 0x35D0FFFF,
+        .CP1_fcr0 = (0x5 << FCR0_PRID) | (0x1 << FCR0_REV),
+        .SEGBITS = 40,
+        .PABITS = 40,
+        .insn_flags = CPU_LOONGSON3A_SEU,
+        .mmu_type = MMU_TYPE_R4000,
+    },
 #if defined(TARGET_MIPS64)
     {
         .name = "R4000",
